@@ -27,18 +27,15 @@ from app.services import llm, voice
 from app.services import task as tm
 from app.utils import utils
 
+APP_NAME = "智影工场"
+APP_SUBTITLE = "AI VIDEO STUDIO"
+
 st.set_page_config(
-    page_title="MoneyPrinterTurbo",
+    page_title=APP_NAME,
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="auto",
-    menu_items={
-        "Report a bug": "https://github.com/harry0703/MoneyPrinterTurbo/issues",
-        "About": "# MoneyPrinterTurbo\nSimply provide a topic or keyword for a video, and it will "
-        "automatically generate the video copy, video materials, video subtitles, "
-        "and video background music before synthesizing a high-definition short "
-        "video.\n\nhttps://github.com/harry0703/MoneyPrinterTurbo",
-    },
+    menu_items={},
 )
 
 
@@ -47,9 +44,110 @@ streamlit_style = """
 h1 {
     padding-top: 0 !important;
 }
+
+header[data-testid="stHeader"],
+div[data-testid="stToolbar"],
+div[data-testid="stDecoration"],
+div[data-testid="stStatusWidget"],
+#MainMenu {
+    display: none !important;
+}
+
+.app-brand {
+    position: relative;
+    z-index: 1;
+}
+
+.app-brand__eyebrow {
+    color: #22d3ee;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin-bottom: 0.7rem;
+    text-transform: uppercase;
+}
+
+.app-brand__name {
+    color: #f8fafc;
+    font-size: clamp(3.2rem, 5.8vw, 6.2rem);
+    font-weight: 850;
+    letter-spacing: 0;
+    line-height: 0.98;
+    margin: 0;
+}
+
+.app-brand__line {
+    background: linear-gradient(90deg, #22d3ee 0%, #a78bfa 48%, #f97316 100%);
+    border-radius: 999px;
+    height: 3px;
+    margin-top: 1.25rem;
+    max-width: 18rem;
+}
+
+.app-brand--app .app-brand__name {
+    color: inherit;
+    font-size: clamp(2.2rem, 3.4vw, 3.6rem);
+}
+
+.app-brand--app .app-brand__eyebrow,
+.app-brand--app .app-brand__line {
+    display: none;
+}
 </style>
 """
 st.markdown(streamlit_style, unsafe_allow_html=True)
+
+LOGIN_USERNAME = "hero"
+LOGIN_PASSWORD = "123456"
+
+
+def login_user(username: str, password: str):
+    if compare_digest(username, LOGIN_USERNAME) and compare_digest(
+        password, LOGIN_PASSWORD
+    ):
+        st.session_state["logged_in"] = True
+        st.session_state.pop("login_error", None)
+        st.rerun()
+
+    st.session_state["login_error"] = "用户名或密码不正确"
+
+
+def render_login_controls():
+    if st.session_state.get("logged_in"):
+        user_col, logout_col = st.columns([1, 0.55])
+        with user_col:
+            st.caption(f"已登录：{LOGIN_USERNAME}")
+        with logout_col:
+            if st.button("退出", key="logout_button", use_container_width=True):
+                st.session_state["logged_in"] = False
+                st.session_state.pop("login_error", None)
+                st.rerun()
+        return
+
+    with st.popover("登录", use_container_width=True):
+        username = st.text_input("用户名", key="login_username")
+        password = st.text_input("密码", type="password", key="login_password")
+        if st.button("登录", type="primary", key="login_submit", use_container_width=True):
+            login_user(username, password)
+        if st.session_state.get("login_error"):
+            st.error(st.session_state["login_error"])
+
+
+def render_app_brand():
+    logged_in = st.session_state.get("logged_in")
+    brand_class = "app-brand app-brand--app" if logged_in else "app-brand"
+    eyebrow = "" if logged_in else f'<div class="app-brand__eyebrow">{APP_SUBTITLE}</div>'
+    line = "" if logged_in else '<div class="app-brand__line"></div>'
+    st.markdown(
+        f"""
+        <div class="{brand_class}">
+            {eyebrow}
+            <div class="app-brand__name">{APP_NAME}</div>
+            {line}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # 定义资源目录
 font_dir = os.path.join(root_dir, "resource", "fonts")
@@ -74,11 +172,95 @@ if "local_video_materials" not in st.session_state:
 # 加载语言文件
 locales = utils.load_locales(i18n_dir)
 
-# 创建一个顶部栏，包含标题和语言选择
-title_col, lang_col = st.columns([3, 1])
+if not st.session_state.get("logged_in"):
+    st.markdown(
+        """
+        <style>
+        [data-testid="stAppViewContainer"] {
+            background:
+                linear-gradient(118deg, rgba(34, 211, 238, 0.16), transparent 34%),
+                linear-gradient(252deg, rgba(168, 85, 247, 0.15), transparent 38%),
+                repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.12) 0 1px, transparent 1px 92px),
+                repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 92px),
+                linear-gradient(135deg, #060712 0%, #0d1020 42%, #10151d 100%) !important;
+            color: #f8fafc;
+            overflow: hidden;
+        }
+
+        [data-testid="stAppViewContainer"]::before {
+            background:
+                linear-gradient(90deg, transparent 0 13%, rgba(34, 211, 238, 0.18) 13% 13.15%, transparent 13.15% 100%),
+                linear-gradient(0deg, transparent 0 24%, rgba(249, 115, 22, 0.16) 24% 24.12%, transparent 24.12% 100%),
+                linear-gradient(145deg, transparent 0 48%, rgba(167, 139, 250, 0.2) 48% 48.22%, transparent 48.22% 100%);
+            content: "";
+            inset: 0;
+            opacity: 0.72;
+            pointer-events: none;
+            position: fixed;
+            z-index: 0;
+        }
+
+        [data-testid="stAppViewContainer"]::after {
+            animation: aiScan 8s linear infinite;
+            background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.06) 44%, transparent 70%);
+            content: "";
+            height: 100%;
+            left: -55%;
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            transform: skewX(-12deg);
+            width: 38%;
+            z-index: 0;
+        }
+
+        @keyframes aiScan {
+            from { left: -55%; }
+            to { left: 125%; }
+        }
+
+        [data-testid="stMain"],
+        [data-testid="stMainBlockContainer"] {
+            background: transparent !important;
+        }
+
+        [data-testid="stMainBlockContainer"] {
+            padding-top: 18vh;
+        }
+
+        [data-testid="stVerticalBlock"] {
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-brand__name {
+            background: linear-gradient(92deg, #ffffff 0%, #dbeafe 35%, #67e8f9 68%, #fef3c7 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 18px 60px rgba(34, 211, 238, 0.28);
+        }
+
+        div[data-testid="stPopover"] button,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+            background: rgba(10, 18, 34, 0.68) !important;
+            border: 1px solid rgba(148, 163, 184, 0.35) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+            color: #f8fafc !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# 创建一个顶部栏，包含标题、登录和语言选择
+title_col, auth_col, lang_col = st.columns([3, 1, 1])
 
 with title_col:
-    st.title(f"MoneyPrinterTurbo v{config.project_version}")
+    render_app_brand()
+
+with auth_col:
+    render_login_controls()
 
 with lang_col:
     display_languages = []
@@ -99,6 +281,9 @@ with lang_col:
         code = selected_language.split(" - ")[0].strip()
         st.session_state["ui_language"] = code
         config.ui["language"] = code
+
+if not st.session_state.get("logged_in"):
+    st.stop()
 
 support_locales = [
     "zh-CN",
@@ -213,19 +398,7 @@ def tr(key):
 
 
 def require_access_password():
-    expected_password = os.getenv("AI_VIDEO_ACCESS_PASSWORD", "").strip()
-    if not expected_password or st.session_state.get("access_granted"):
-        return
-
-    st.title("AI Video")
-    password = st.text_input("访问密码", type="password")
-    if password:
-        if compare_digest(password, expected_password):
-            st.session_state["access_granted"] = True
-            st.rerun()
-        else:
-            st.error("密码不正确")
-    st.stop()
+    return
 
 
 require_access_password()
