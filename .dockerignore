@@ -1,0 +1,13 @@
+.git
+.venv
+__pycache__
+*.pyc
+.DS_Store
+
+# Never bake local secrets or generated media into the image.
+config.toml
+storage
+
+# Local-only/generated output.
+.streamlit/secrets.toml
+*.log

@@ -58,11 +58,13 @@ RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trus
 # Now copy the rest of the codebase into the image
 COPY . .
 
+RUN chmod +x ./render-start.sh
+
 # Expose the port the app runs on
 EXPOSE 8501
 
 # Command to run the application
-CMD ["streamlit", "run", "./webui/Main.py","--browser.serverAddress=127.0.0.1","--server.enableCORS=True","--browser.gatherUsageStats=False"]
+CMD ["./render-start.sh"]
 
 # 1. Build the Docker image using the following command
 # docker build -t moneyprinterturbo .

@@ -1,6 +1,7 @@
 import os
 import sys
 import webbrowser
+from hmac import compare_digest
 from uuid import UUID, uuid4
 
 import streamlit as st
@@ -209,6 +210,25 @@ locales = utils.load_locales(i18n_dir)
 def tr(key):
     loc = locales.get(st.session_state["ui_language"], {})
     return loc.get("Translation", {}).get(key, key)
+
+
+def require_access_password():
+    expected_password = os.getenv("AI_VIDEO_ACCESS_PASSWORD", "").strip()
+    if not expected_password or st.session_state.get("access_granted"):
+        return
+
+    st.title("AI Video")
+    password = st.text_input("访问密码", type="password")
+    if password:
+        if compare_digest(password, expected_password):
+            st.session_state["access_granted"] = True
+            st.rerun()
+        else:
+            st.error("密码不正确")
+    st.stop()
+
+
+require_access_password()
 
 
 # 创建基础设置折叠框

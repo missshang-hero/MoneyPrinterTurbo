@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: herojiatou-ai-video
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /_stcore/health
+    domains:
+      - video.herojiatou.com
+    envVars:
+      - key: AI_VIDEO_ENDPOINT
+        value: https://video.herojiatou.com
+      - key: AI_VIDEO_ACCESS_PASSWORD
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
