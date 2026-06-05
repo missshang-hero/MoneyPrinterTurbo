@@ -144,13 +144,13 @@ def render_app_brand():
     eyebrow = "" if logged_in else f'<div class="app-brand__eyebrow">{APP_SUBTITLE}</div>'
     line = "" if logged_in else '<div class="app-brand__line"></div>'
     st.markdown(
-        f"""
-        <div class="{brand_class}">
-            {eyebrow}
-            <div class="app-brand__name">{APP_NAME}</div>
-            {line}
-        </div>
-        """,
+        (
+            f'<div class="{brand_class}">'
+            f"{eyebrow}"
+            f'<div class="app-brand__name">{APP_NAME}</div>'
+            f"{line}"
+            "</div>"
+        ),
         unsafe_allow_html=True,
     )
 
