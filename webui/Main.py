@@ -97,19 +97,21 @@ div[data-testid="stStatusWidget"],
 """
 st.markdown(streamlit_style, unsafe_allow_html=True)
 
-LOGIN_USERNAME = "hero"
-LOGIN_PASSWORD = "123456"
+LOGIN_USERNAME = os.getenv("AI_VIDEO_ACCESS_USERNAME", "hero").strip() or "hero"
+LOGIN_PASSWORD = os.getenv("AI_VIDEO_ACCESS_PASSWORD", "").strip()
 
 
 def login_user(username: str, password: str):
-    if compare_digest(username, LOGIN_USERNAME) and compare_digest(
+    if LOGIN_PASSWORD and compare_digest(username, LOGIN_USERNAME) and compare_digest(
         password, LOGIN_PASSWORD
     ):
         st.session_state["logged_in"] = True
         st.session_state.pop("login_error", None)
         st.rerun()
 
-    st.session_state["login_error"] = "用户名或密码不正确"
+    st.session_state["login_error"] = (
+        "服务暂未配置访问密码" if not LOGIN_PASSWORD else "用户名或密码不正确"
+    )
 
 
 def render_login_controls():
@@ -125,6 +127,9 @@ def render_login_controls():
         return
 
     with st.popover("登录", use_container_width=True):
+        if not LOGIN_PASSWORD:
+            st.warning("服务暂未配置访问密码")
+            return
         username = st.text_input("用户名", key="login_username")
         password = st.text_input("密码", type="password", key="login_password")
         if st.button("登录", type="primary", key="login_submit", use_container_width=True):
